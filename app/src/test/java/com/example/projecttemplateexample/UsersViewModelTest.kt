@@ -1,3 +1,4 @@
+import com.example.projecttemplateexample.NetworkChecker
 import com.example.projecttemplateexample.UserDataService
 import com.example.projecttemplateexample.models.UserDto
 import com.example.projecttemplateexample.vm.UsersViewModel
@@ -10,6 +11,12 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+
+class FakeNetworkChecker : NetworkChecker {
+    override fun isNetworkAvailable(): Boolean {
+        return true
+    }
+}
 
 class MockUsersService : UserDataService {
     // implementoidaan getUsers-funktio
@@ -35,6 +42,7 @@ class UsersViewModelTest {
 
     private lateinit var viewModel: UsersViewModel
     private lateinit var service: UserDataService
+    private lateinit var networkChecker: FakeNetworkChecker
 
 
     // tarvitaan optinia coroutineiden testausta varten
@@ -49,8 +57,9 @@ class UsersViewModelTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
         // tehdään isntanssi mockupservicesta testiä varten
         service = MockUsersService() // Or use Mockito mock
+        networkChecker = FakeNetworkChecker()
         // tehdään viewmodelista instanssi ja annetaan service dependncyna
-        viewModel = UsersViewModel(service)
+        viewModel = UsersViewModel(service, networkChecker)
     }
 
 

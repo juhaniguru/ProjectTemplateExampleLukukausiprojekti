@@ -46,7 +46,7 @@ object RepositoryModule {
 object NetworkModule {
     @Provides
     fun provideNetworkChecker(@ApplicationContext context: Context): NetworkChecker {
-        return NetworkChecker(context)
+        return NetworkCheckerImpl(context)
     }
 }
 
