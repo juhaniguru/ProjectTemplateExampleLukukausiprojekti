@@ -2,6 +2,7 @@ package com.example.projecttemplateexample.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projecttemplateexample.NetworkChecker
 import com.example.projecttemplateexample.UserDataService
 import com.example.projecttemplateexample.models.UserState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +13,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class UsersViewModel @Inject constructor(private val dataService: UserDataService) : ViewModel() {
+class UsersViewModel @Inject constructor(
+    private val dataService: UserDataService,
+    private val networkChecker: NetworkChecker
+) : ViewModel() {
     private val _state = MutableStateFlow(UserState())
     val state = _state.asStateFlow()
 
@@ -20,23 +24,29 @@ class UsersViewModel @Inject constructor(private val dataService: UserDataServic
         getUsers()
     }
 
-    private fun getUsers() {
+    fun getUsers() {
         viewModelScope.launch {
-            try {
-                _state.update { currentState ->
-                    currentState.copy(loading = true, error = null)
+            if (networkChecker.isNetworkAvailable()) {
+                try {
+                    _state.update { currentState ->
+                        currentState.copy(loading = true, error = null)
+                    }
+                    val users = dataService.getUsers()
+                    _state.update { currentState ->
+                        currentState.copy(users = users)
+                    }
+                } catch (e: Exception) {
+                    _state.update { currentState ->
+                        currentState.copy(error = e.toString())
+                    }
+                } finally {
+                    _state.update { currentState ->
+                        currentState.copy(loading = false)
+                    }
                 }
-                val users = dataService.getUsers()
+            } else {
                 _state.update { currentState ->
-                    currentState.copy(users=users)
-                }
-            } catch(e: Exception) {
-                _state.update { currentState ->
-                    currentState.copy(error = e.toString())
-                }
-            } finally {
-                _state.update { currentState ->
-                    currentState.copy(loading = false)
+                    currentState.copy(error = "No network connection")
                 }
             }
         }
